@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0b1220" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%23315fce'/%3E%3Cpath d='M13 43 27 29l9 9 16-19' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M39 19h13v13' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <title>TradePlan — Trading Calculator</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --surface: #ffffff;
+      --surface-soft: #f8fafc;
+      --text: #172033;
+      --muted: #697586;
+      --line: #e5eaf1;
+      --primary: #315fce;
+      --primary-dark: #244ba8;
+      --green: #138a5b;
+      --green-bg: #eaf8f1;
+      --red: #d04444;
+      --red-bg: #fff0f0;
+      --shadow: 0 14px 40px rgba(22, 34, 57, .07);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    .app-shell { max-width: 1440px; margin: 0 auto; padding: 28px clamp(16px, 3vw, 42px) 48px; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; gap: 18px; margin-bottom: 30px; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-mark {
+      width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center;
+      background: #315fce;
+      box-shadow: 0 8px 18px rgba(49,95,206,.25);
+      flex: 0 0 auto;
+    }
+    .brand-mark svg { width: 30px; height: 30px; overflow: visible; }
+    .brand-mark path {
+      fill: none; stroke: #fff; stroke-width: 5;
+      stroke-linecap: round; stroke-linejoin: round;
+    }
+    .brand-name { font-size: 19px; font-weight: 800; letter-spacing: -.5px; }
+    .brand-sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+    .topbar-note { color: var(--muted); font-size: 13px; display: flex; align-items: center; gap: 8px; }
+    .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #19a56e; box-shadow: 0 0 0 4px #e3f6ed; }
+    .page-heading { margin-bottom: 22px; }
+    .eyebrow { color: var(--primary); font-size: 11px; font-weight: 800; letter-spacing: 1.4px; text-transform: uppercase; margin-bottom: 8px; }
+    h1 { font-size: clamp(25px, 3vw, 34px); line-height: 1.15; letter-spacing: -1.1px; margin: 0; }
+    .page-heading p { color: var(--muted); margin: 9px 0 0; font-size: 14px; }
+    .main-grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(310px, .85fr); gap: 22px; align-items: start; }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+    .card-header { padding: 22px 24px 17px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .card-title { font-size: 16px; font-weight: 750; letter-spacing: -.25px; }
+    .card-description { color: var(--muted); font-size: 12px; margin-top: 4px; }
+    .step-label { color: #718096; background: #f0f4fa; padding: 6px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+    .form-body { padding: 23px 24px 25px; }
+    .section-label { display: flex; align-items: center; gap: 9px; color: #445168; font-size: 12px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; margin: 2px 0 15px; }
+    .section-label:after { content: ""; height: 1px; background: var(--line); flex: 1; }
+    .fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 17px 16px; margin-bottom: 25px; }
+    .field.full { grid-column: 1 / -1; }
+    label { display: block; font-size: 12px; color: #526075; font-weight: 700; margin-bottom: 8px; }
+    .input-wrap { position: relative; }
+    .prefix, .suffix { position: absolute; top: 50%; transform: translateY(-50%); color: #8a95a5; font-size: 13px; pointer-events: none; }
+    .prefix { left: 13px; } .suffix { right: 13px; }
+    input {
+      width: 100%; height: 46px; border: 1px solid #dce3ed; border-radius: 10px; outline: none;
+      background: #fff; color: var(--text); padding: 0 13px; transition: border .18s, box-shadow .18s;
+    }
+    input.with-prefix { padding-left: 31px; } input.with-suffix { padding-right: 35px; }
+    input:focus { border-color: #7193e4; box-shadow: 0 0 0 3px rgba(49,95,206,.11); }
+    input::placeholder { color: #aab3c0; }
+    .hint { color: #8a95a5; font-size: 11px; margin-top: 6px; }
+    .button-row { display: flex; flex-wrap: wrap; gap: 10px; }
+    .btn { border: 0; border-radius: 10px; padding: 12px 17px; font-size: 13px; font-weight: 750; transition: transform .15s, background .15s; }
+    .btn:active { transform: translateY(1px); }
+    .btn-primary { background: var(--primary); color: white; box-shadow: 0 7px 15px rgba(49,95,206,.18); }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-secondary { background: #f0f3f8; color: #46546a; }
+    .btn-secondary:hover { background: #e7edf5; }
+    .results-card { overflow: hidden; }
+    .results-top { padding: 22px 23px 20px; background: linear-gradient(145deg, #172b52, #244b91); color: white; }
+    .results-top .card-title { color: white; }
+    .results-top .card-description { color: #c5d3ed; }
+    .result-main { margin-top: 22px; }
+    .result-caption { color: #c5d3ed; font-size: 11px; font-weight: 650; letter-spacing: .5px; text-transform: uppercase; }
+    .result-value { font-size: clamp(30px, 4vw, 40px); font-weight: 800; letter-spacing: -1.4px; margin-top: 4px; }
+    .result-sub { color: #d3def1; font-size: 12px; margin-top: 4px; }
+    .results-body { padding: 18px 22px 22px; }
+    .metric-row { display: flex; justify-content: space-between; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--line); font-size: 12px; }
+    .metric-row:last-of-type { border-bottom: 0; }
+    .metric-label { color: var(--muted); }
+    .metric-value { font-weight: 750; text-align: right; font-variant-numeric: tabular-nums; }
+    .positive { color: var(--green); } .negative { color: var(--red); }
+    .price-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px 0; }
+    .price-panel { padding: 13px; border-radius: 12px; background: var(--green-bg); }
+    .price-panel.loss { background: var(--red-bg); }
+    .price-panel span { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: #5c786b; font-weight: 800; }
+    .price-panel.loss span { color: #9d6868; }
+    .price-panel strong { display: block; font-size: 18px; margin-top: 6px; font-variant-numeric: tabular-nums; }
+    .price-panel:not(.loss) strong { color: var(--green); }
+    .price-panel.loss strong { color: var(--red); }
+    .disclaimer { margin-top: 15px; font-size: 10px; color: #8994a4; line-height: 1.5; }
+    .plans-card { margin-top: 22px; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 850px; }
+    th { background: #f8fafd; color: #667387; text-align: left; font-size: 10px; letter-spacing: .55px; text-transform: uppercase; padding: 13px 15px; white-space: nowrap; }
+    td { padding: 14px 15px; border-top: 1px solid var(--line); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    td:first-child { font-weight: 750; }
+    .empty-state { text-align: center; padding: 32px 15px; color: #8a95a5; font-size: 12px; }
+    .delete-btn { border: 0; color: #c34d4d; background: #fff0f0; border-radius: 7px; padding: 6px 9px; font-size: 11px; font-weight: 700; }
+    .table-actions { display: flex; gap: 8px; align-items: center; }
+    .footer { color: #929cab; font-size: 11px; text-align: center; margin-top: 25px; }
+    @media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; } .results-card { display: grid; grid-template-columns: 1fr 1fr; } .results-top { border-radius: var(--radius) 0 0 var(--radius); } .results-body { align-self: center; } }
+    @media (max-width: 620px) {
+      .app-shell { padding: 18px 13px 30px; }
+      .topbar { margin-bottom: 24px; } .topbar-note { display: none; }
+      .card-header { padding: 18px 17px 14px; } .form-body { padding: 19px 17px 20px; }
+      .fields { gap: 14px 11px; } input { height: 44px; font-size: 13px; }
+      .results-card { display: block; } .results-top { border-radius: var(--radius) var(--radius) 0 0; }
+      .results-body { padding: 12px 18px 18px; }
+      .result-value { font-size: 34px; }
+      .button-row .btn { flex: 1; }
+    }
+    @media (max-width: 390px) { .fields { grid-template-columns: 1fr; } .field.full { grid-column: auto; } .price-panels { gap: 8px; } }
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-label="TradePlan logo" role="img">
+          <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+            <path d="M13 43 27 29l9 9 16-19" />
+            <path d="M39 19h13v13" />
+          </svg>
+        </div>
+        <div><div class="brand-name">TradePlan</div><div class="brand-sub">Trading calculator</div></div>
+      </div>
+      <div class="topbar-note"><span class="live-dot"></span> Calculations update instantly</div>
+    </header>
+
+    <section class="page-heading">
+      <div class="eyebrow">Plan your trade</div>
+      <h1>Trading calculator</h1>
+      <p>Calculate your target, stop-loss, potential profit and risk before you enter a trade.</p>
+    </section>
+
+    <section class="main-grid">
+      <article class="card">
+        <div class="card-header">
+          <div><div class="card-title">Trade details</div><div class="card-description">Enter your position details below</div></div>
+          <span class="step-label">TRADE SETUP</span>
+        </div>
+        <div class="form-body">
+          <div class="section-label">Position details</div>
+          <div class="fields">
+            <div class="field full">
+              <label for="symbol">Trade / stock name</label>
+              <input id="symbol" type="text" placeholder="e.g. RELIANCE, NIFTY, TCS" value="RELIANCE" autocomplete="off" />
+            </div>
+            <div class="field">
+              <label for="buyPrice">Buying price</label>
+              <div class="input-wrap"><span class="prefix">₹</span><input class="with-prefix" id="buyPrice" type="number" min="0" step="0.01" value="100" /></div>
+            </div>
+            <div class="field">
+              <label for="quantity">Quantity</label>
+              <input id="quantity" type="number" min="1" step="1" value="100" />
+            </div>
+          </div>
+          <div class="section-label">Risk &amp; reward settings</div>
+          <div class="fields">
+            <div class="field">
+              <label for="targetPct">Target percentage</label>
+              <div class="input-wrap"><input class="with-suffix" id="targetPct" type="number" min="0" step="0.1" value="10" /><span class="suffix">%</span></div>
+              <div class="hint">Expected upside from buying price</div>
+            </div>
+            <div class="field">
+              <label for="stopPct">Stop-loss percentage</label>
+              <div class="input-wrap"><input class="with-suffix" id="stopPct" type="number" min="0" max="100" step="0.1" value="5" /><span class="suffix">%</span></div>
+              <div class="hint">Maximum planned downside</div>
+            </div>
+          </div>
+          <div class="button-row">
+            <button class="btn btn-primary" id="addPlan">＋ Save trade plan</button>
+            <button class="btn btn-secondary" id="resetForm" type="button">Reset calculator</button>
+          </div>
+        </div>
+      </article>
+
+      <aside class="card results-card" aria-live="polite">
+        <div class="results-top">
+          <div class="card-title">Your trade summary</div>
+          <div class="card-description">Estimated outcome at your target and stop-loss</div>
+          <div class="result-main">
+            <div class="result-caption">Potential profit</div>
+            <div class="result-value" id="mainProfit">₹1,000.00</div>
+            <div class="result-sub" id="profitPercent">10.00% return on position</div>
+          </div>
+        </div>
+        <div class="results-body">
+          <div class="price-panels">
+            <div class="price-panel"><span>Target price</span><strong id="targetPrice">₹110.00</strong></div>
+            <div class="price-panel loss"><span>Stop-loss price</span><strong id="stopPrice">₹95.00</strong></div>
+          </div>
+          <div class="metric-row"><span class="metric-label">Total investment</span><span class="metric-value" id="investment">₹10,000.00</span></div>
+          <div class="metric-row"><span class="metric-label">Potential loss</span><span class="metric-value negative" id="potentialLoss">₹500.00</span></div>
+          <div class="metric-row"><span class="metric-label">Risk / reward ratio</span><span class="metric-value" id="riskReward">1 : 2.00</span></div>
+          <div class="metric-row"><span class="metric-label">Break-even price</span><span class="metric-value" id="breakEven">₹100.00</span></div>
+          <div class="disclaimer">Estimates exclude brokerage, taxes, slippage and other charges. This calculator does not provide investment advice or guarantee outcomes.</div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="card plans-card">
+      <div class="card-header">
+        <div><div class="card-title">Saved trade plans</div><div class="card-description">Keep track of the setups you are considering</div></div>
+        <div class="table-actions">
+          <button class="btn btn-secondary" id="exportCsv" type="button">Export CSV</button>
+          <button class="btn btn-secondary" id="clearPlans" type="button">Clear all</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Trade / Stock</th><th>Buying price</th><th>Quantity</th><th>Target</th><th>Stop-loss</th><th>Potential profit</th><th>Potential loss</th><th>Action</th></tr></thead>
+          <tbody id="plansBody"><tr><td colspan="8" class="empty-state">No saved trade plans yet. Calculate a setup and select “Save trade plan”.</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+    <div class="footer">TradePlan · Your saved trade plans and calculator inputs are stored in this browser using localStorage.</div>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const fields = ["symbol", "buyPrice", "quantity", "targetPct", "stopPct"];
+    const PLANS_STORAGE_KEY = "tradeplan_saved_plans_v1";
+    const FORM_STORAGE_KEY = "tradeplan_form_state_v1";
+
+    function loadFromStorage(key, fallback) {
+      try {
+        const saved = localStorage.getItem(key);
+        return saved ? JSON.parse(saved) : fallback;
+      } catch (error) {
+        console.warn(`Could not read ${key} from localStorage:`, error);
+        return fallback;
+      }
+    }
+
+    let plans = loadFromStorage(PLANS_STORAGE_KEY, []);
+    if (!Array.isArray(plans)) plans = [];
+
+    function savePlans() {
+      try {
+        localStorage.setItem(PLANS_STORAGE_KEY, JSON.stringify(plans));
+      } catch (error) {
+        console.warn("Could not save trade plans:", error);
+        alert("Your browser could not save the trade plans. Check available storage.");
+      }
+    }
+
+    function saveFormState() {
+      const formState = {};
+      fields.forEach(id => formState[id] = $(id).value);
+      try {
+        localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(formState));
+      } catch (error) {
+        console.warn("Could not save calculator inputs:", error);
+      }
+    }
+
+    function restoreFormState() {
+      const saved = loadFromStorage(FORM_STORAGE_KEY, null);
+      if (!saved || typeof saved !== "object") return;
+      fields.forEach(id => {
+        if (Object.prototype.hasOwnProperty.call(saved, id)) {
+          $(id).value = saved[id];
+        }
+      });
+    }
+
+    const number = (id) => Number($(id).value);
+    const money = (value) => new Intl.NumberFormat("en-IN", {
+      style: "currency", currency: "INR", minimumFractionDigits: 2, maximumFractionDigits: 2
+    }).format(Number.isFinite(value) ? value : 0);
+
+    function readTrade() {
+      const buy = number("buyPrice");
+      const qty = number("quantity");
+      const targetPct = number("targetPct");
+      const stopPct = number("stopPct");
+      return {
+        symbol: $("symbol").value.trim() || "Untitled trade",
+        buy, qty, targetPct, stopPct,
+        target: buy * (1 + targetPct / 100),
+        stop: buy * (1 - stopPct / 100),
+        investment: buy * qty,
+        profit: buy * qty * targetPct / 100,
+        loss: buy * qty * stopPct / 100
+      };
+    }
+
+    function validTrade(t) {
+      return Number.isFinite(t.buy) && t.buy > 0 &&
+        Number.isInteger(t.qty) && t.qty > 0 &&
+        Number.isFinite(t.targetPct) && t.targetPct >= 0 &&
+        Number.isFinite(t.stopPct) && t.stopPct >= 0 && t.stopPct <= 100;
+    }
+
+    function calculate() {
+      const t = readTrade();
+      if (!validTrade(t)) {
+        $("mainProfit").textContent = "—";
+        $("profitPercent").textContent = "Enter valid trade details";
+        return;
+      }
+      $("mainProfit").textContent = money(t.profit);
+      $("profitPercent").textContent = `${t.targetPct.toFixed(2)}% return on position`;
+      $("targetPrice").textContent = money(t.target);
+      $("stopPrice").textContent = money(t.stop);
+      $("investment").textContent = money(t.investment);
+      $("potentialLoss").textContent = money(t.loss);
+      $("riskReward").textContent = t.stopPct === 0 ? "—" : `1 : ${(t.targetPct / t.stopPct).toFixed(2)}`;
+      $("breakEven").textContent = money(t.buy);
+    }
+
+    function renderPlans() {
+      const body = $("plansBody");
+      if (!plans.length) {
+        body.innerHTML = '<tr><td colspan="8" class="empty-state">No saved trade plans yet. Calculate a setup and select “Save trade plan”.</td></tr>';
+        return;
+      }
+      body.innerHTML = plans.map((p, i) => `
+        <tr>
+          <td>${escapeHtml(p.symbol)}</td><td>${money(p.buy)}</td><td>${p.qty.toLocaleString("en-IN")}</td>
+          <td>${money(p.target)} <span class="positive">(${p.targetPct}%)</span></td>
+          <td>${money(p.stop)} <span class="negative">(${p.stopPct}%)</span></td>
+          <td class="positive">${money(p.profit)}</td><td class="negative">${money(p.loss)}</td>
+          <td><button class="delete-btn" data-index="${i}">Remove</button></td>
+        </tr>`).join("");
+      body.querySelectorAll(".delete-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          plans.splice(Number(btn.dataset.index), 1);
+          savePlans();
+          renderPlans();
+        });
+      });
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+    }
+
+    fields.forEach(id => $(id).addEventListener("input", () => {
+      calculate();
+      saveFormState();
+    }));
+    $("addPlan").addEventListener("click", () => {
+      const t = readTrade();
+      if (!validTrade(t)) {
+        alert("Please enter a buying price above 0, a whole-number quantity, a target of 0% or more, and a stop-loss between 0% and 100%.");
+        return;
+      }
+      plans.unshift(t);
+      savePlans();
+      renderPlans();
+    });
+    $("resetForm").addEventListener("click", () => {
+      $("symbol").value = "";
+      $("buyPrice").value = "";
+      $("quantity").value = "";
+      $("targetPct").value = "";
+      $("stopPct").value = "";
+      calculate();
+      saveFormState();
+    });
+    $("clearPlans").addEventListener("click", () => {
+      if (plans.length && confirm("Remove all saved trade plans?")) {
+        plans = [];
+        savePlans();
+        renderPlans();
+      }
+    });
+    $("exportCsv").addEventListener("click", () => {
+      if (!plans.length) { alert("There are no saved trade plans to export."); return; }
+      const headers = ["Trade / Stock","Buying Price","Quantity","Target %","Stop-loss %","Target Price","Stop-loss Price","Potential Profit","Potential Loss","Investment"];
+      const rows = plans.map(p => [p.symbol,p.buy,p.qty,p.targetPct,p.stopPct,p.target,p.stop,p.profit,p.loss,p.investment]);
+      const csv = [headers, ...rows].map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\r\n");
+      const blob = new Blob(["\uFEFF" + csv], {type:"text/csv;charset=utf-8;"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url; a.download = "trade-plans.csv"; a.click();
+      URL.revokeObjectURL(url);
+    });
+    restoreFormState();
+    calculate();
+    renderPlans();
+  </script>
+</body>
+</html>
