@@ -277,7 +277,11 @@
 
     function restoreFormState() {
       const saved = loadFromStorage(FORM_STORAGE_KEY, null);
+
+      // Keep the built-in example visible on a first visit.
+      // Restore the user's last inputs on subsequent visits.
       if (!saved || typeof saved !== "object") return;
+
       fields.forEach(id => {
         if (Object.prototype.hasOwnProperty.call(saved, id)) {
           $(id).value = saved[id];
@@ -313,11 +317,21 @@
         Number.isFinite(t.stopPct) && t.stopPct >= 0 && t.stopPct <= 100;
     }
 
+    function clearSummary(message = "Enter trade details to see estimates") {
+      $("mainProfit").textContent = "—";
+      $("profitPercent").textContent = message;
+      $("targetPrice").textContent = "—";
+      $("stopPrice").textContent = "—";
+      $("investment").textContent = "—";
+      $("potentialLoss").textContent = "—";
+      $("riskReward").textContent = "—";
+      $("breakEven").textContent = "—";
+    }
+
     function calculate() {
       const t = readTrade();
       if (!validTrade(t)) {
-        $("mainProfit").textContent = "—";
-        $("profitPercent").textContent = "Enter valid trade details";
+        clearSummary();
         return;
       }
       $("mainProfit").textContent = money(t.profit);
@@ -372,12 +386,10 @@
       renderPlans();
     });
     $("resetForm").addEventListener("click", () => {
-      $("symbol").value = "";
-      $("buyPrice").value = "";
-      $("quantity").value = "";
-      $("targetPct").value = "";
-      $("stopPct").value = "";
-      calculate();
+      // Reset the form and every calculated summary field together.
+      // Saved trade plans remain in the results table.
+      fields.forEach(id => { $(id).value = ""; });
+      clearSummary("Calculator reset. Enter trade details to see estimates.");
       saveFormState();
     });
     $("clearPlans").addEventListener("click", () => {
@@ -397,9 +409,11 @@
       const a = document.createElement("a"); a.href = url; a.download = "trade-plans.csv"; a.click();
       URL.revokeObjectURL(url);
     });
+    const hasSavedFormState = localStorage.getItem(FORM_STORAGE_KEY) !== null;
     restoreFormState();
     calculate();
     renderPlans();
+    if (!hasSavedFormState) saveFormState();
   </script>
 </body>
 </html>
